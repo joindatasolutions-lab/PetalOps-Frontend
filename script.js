@@ -1,6 +1,6 @@
 const ORIGEN_CATALOGO = "normal";
 // === CONFIGURACIÓN GENERAL ===
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwdixPJBCFos9aUaUT_NDxQ2ZMW3s2CXoQ0KRNVNe8aYmaXtTSONvKgPRXIFcFpSSmO/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx6HiSaN138VRGRayGsmIULW0R4jsHgrvW0WJqy5tduClxPcA-6-M8HN06nfgRwFE8xew/exec";
 
 /**
  * Estado global de la aplicación

@@ -1,4 +1,4 @@
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwdixPJBCFos9aUaUT_NDxQ2ZMW3s2CXoQ0KRNVNe8aYmaXtTSONvKgPRXIFcFpSSmO/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx6HiSaN138VRGRayGsmIULW0R4jsHgrvW0WJqy5tduClxPcA-6-M8HN06nfgRwFE8xew/exec";
 const IMG_FALLBACK = "https://via.placeholder.com/360x200?text=Sin+imagen";
 const getById = id => (typeof document !== 'undefined' ? document.getElementById(id) : null);
 
