@@ -41,7 +41,18 @@ async function init() {
     const data = await res.json();
     state.catalogo = data.catalogo || [];
     state.catalogoEnriquecido = enriquecerCatalogoCategorias(state.catalogo);
-    state.barrios = data.barrios || {};
+    
+    // 🛠️ Fallback: si el backend no provee barrios, cargamos set local de ejemplo
+    state.barrios = (data.barrios && Object.keys(data.barrios).length > 0)
+      ? data.barrios
+      : {
+          "Barrio Central": 8000,
+          "Barrio Norte": 10000,
+          "Barrio Sur": 9000,
+          "Barrio Este": 11000,
+          "Barrio Oeste": 9500
+        };
+    
     renderCatalogoPorCategorias();
     fillBarrios();
     fillFiltrosCategorias();
@@ -200,11 +211,18 @@ function fillBarrios() {
   const sel = document.getElementById("barrio");
   if (!sel) return;
 
+  console.log("Datos de barrios recibidos:", state.barrios); // 👈 Revisa esto en la consola
+
   sel.innerHTML = `<option value="">Selecciona un barrio...</option>`;
 
+  // Convertimos las llaves del objeto en un arreglo para ordenarlas
   const barriosOrdenados = Object.keys(state.barrios).sort((a, b) =>
     a.localeCompare(b, 'es', { sensitivity: 'base' })
   );
+
+  if (barriosOrdenados.length === 0) {
+    console.warn("⚠️ No se encontraron barrios en el objeto state.barrios");
+  }
 
   barriosOrdenados.forEach(barrio => {
     const op = document.createElement("option");
@@ -691,11 +709,11 @@ if (typeof document !== 'undefined') {
 
     if (data.status === "success") {
 
-      const telefonoFlora = ("57" + "3013755838").replace(/\D/g, ""); // 📲 WhatsApp oficial Flora
+      const telefonoPetalOps = ("57" + "3332571225").replace(/\D/g, ""); // 📲 WhatsApp oficial PetalOps
       const mensaje = encodeURIComponent(
         "Hola 🌸 Ya realicé el registro de mi pedido en el formulario y quedo atento(a) para continuar con el proceso de pago."
       );
-      const whatsappLink = `https://wa.me/${telefonoFlora}?text=${mensaje}`;
+      const whatsappLink = `https://wa.me/${telefonoPetalOps}?text=${mensaje}`;
 
       Swal.fire({
         icon: "success",
@@ -709,7 +727,7 @@ if (typeof document !== 'undefined') {
             <strong>escríbenos ahora mismo por WhatsApp</strong>.
           </p>
           <p style="font-size:14px;color:#666;">
-            Una persona del equipo Flora te responderá para confirmar el pedido
+            Una persona del equipo PetalOps te responderá para confirmar el pedido
             y brindarte las instrucciones de pago.
           </p>
         `,
