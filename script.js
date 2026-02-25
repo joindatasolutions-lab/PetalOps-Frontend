@@ -1,6 +1,7 @@
 const ORIGEN_CATALOGO = "normal";
 // === CONFIGURACIÓN GENERAL ===
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx6HiSaN138VRGRayGsmIULW0R4jsHgrvW0WJqy5tduClxPcA-6-M8HN06nfgRwFE8xew/exec";
+const DEBUG_INIT = true;
 
 /**
  * Estado global de la aplicación
@@ -36,15 +37,53 @@ const fmtCOP = v => Number(v || 0).toLocaleString('es-CO');
  * @returns {Promise<void>}
  */
 async function init() {
+  // Reset determinístico del estado antes de cada carga
+  state.catalogo = [];
+  state.catalogoEnriquecido = [];
+  state.cart = [];
+  state.domicilio = 0;
+  state.iva = 0;
+  state.categoriaSeleccionada = null;
+  state.barrios = {};
+
   try {
     const res = await fetch(SCRIPT_URL);
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} al consultar catálogo`);
+    }
+
     const data = await res.json();
-    state.catalogo = data.catalogo || [];
+
+    if (DEBUG_INIT) {
+      console.log("[init] data recibido desde backend:", data);
+    }
+
+    const payload = data && typeof data === "object" ? data : {};
+    const backendError = typeof payload.error === "string" && payload.error.trim() !== "";
+
+    if (backendError) {
+      console.error("[init] backend error:", payload.error);
+
+      const cont = document.getElementById("catalogo");
+      if (cont) {
+        cont.innerHTML = `<p style="text-align:center; color:#888; padding:40px 20px;">No pudimos cargar el catálogo en este momento. Intenta de nuevo en unos minutos.</p>`;
+      }
+
+      Swal.fire("Servicio temporalmente no disponible", "El backend devolvió un error al cargar el catálogo.", "warning");
+      return;
+    }
+
+    state.catalogo = Array.isArray(payload.catalogo) ? payload.catalogo : [];
     state.catalogoEnriquecido = enriquecerCatalogoCategorias(state.catalogo);
+
+    if (DEBUG_INIT) {
+      console.log("[init] state.catalogo length:", state.catalogo.length);
+      console.log("[init] state.catalogoEnriquecido length:", state.catalogoEnriquecido.length);
+    }
     
     // 🛠️ Fallback: si el backend no provee barrios, cargamos set local de ejemplo
-    state.barrios = (data.barrios && Object.keys(data.barrios).length > 0)
-      ? data.barrios
+    state.barrios = (payload.barrios && Object.keys(payload.barrios).length > 0)
+      ? payload.barrios
       : {
           "Barrio Central": 8000,
           "Barrio Norte": 10000,
@@ -52,8 +91,19 @@ async function init() {
           "Barrio Este": 11000,
           "Barrio Oeste": 9500
         };
-    
-    renderCatalogoPorCategorias();
+
+    const filtroCategorias = document.getElementById("filtroCategorias");
+    if (filtroCategorias) filtroCategorias.value = "";
+
+    if (state.catalogoEnriquecido.length > 0) {
+      renderCatalogoPorCategorias();
+    } else {
+      const cont = document.getElementById("catalogo");
+      if (cont) {
+        cont.innerHTML = `<p style="text-align:center; color:#888; padding:40px 20px;">No hay productos disponibles 😔</p>`;
+      }
+    }
+
     fillBarrios();
     fillFiltrosCategorias();
   } catch (error) {
@@ -65,12 +115,31 @@ async function init() {
 // === RENDERIZAR CATÁLOGO POR CATEGORÍAS ===
 function renderCatalogoPorCategorias() {
   const cont = document.getElementById("catalogo");
+  if (!cont) return;
+
   cont.innerHTML = "";
+
+  const catalogoBase = Array.isArray(state.catalogoEnriquecido)
+    ? state.catalogoEnriquecido
+    : [];
+
+  // Evitar filtros obsoletos después de recargas o cambios de dataset
+  if (state.categoriaSeleccionada) {
+    const categoriaExiste = catalogoBase.some(prod =>
+      (prod.categoria || obtenerCategoria(prod.id)) === state.categoriaSeleccionada
+    );
+
+    if (!categoriaExiste) {
+      state.categoriaSeleccionada = null;
+      const filtroCategorias = document.getElementById("filtroCategorias");
+      if (filtroCategorias) filtroCategorias.value = "";
+    }
+  }
 
   // Filtrar por categoría si está seleccionada
   const catalogoParaMostrar = state.categoriaSeleccionada
-    ? filtrarPorCategoria(state.catalogoEnriquecido, state.categoriaSeleccionada)
-    : state.catalogoEnriquecido;
+    ? filtrarPorCategoria(catalogoBase, state.categoriaSeleccionada)
+    : catalogoBase;
 
   // Agrupar por categoría
   const grupos = agruparPorCategoria(catalogoParaMostrar);
