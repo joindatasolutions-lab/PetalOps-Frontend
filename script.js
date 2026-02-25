@@ -176,29 +176,29 @@ function renderCatalogoPorCategorias() {
     const gridDiv = document.createElement("div");
     gridDiv.className = "catalogo-grid";
 
-    productos.forEach(prod => {
-      const imagen = prod.img || "https://via.placeholder.com/300x300?text=Sin+Imagen";
-      const precio = getProductPrice(prod);
+    productos.forEach(producto => {
+      const imagen = producto.img || "https://via.placeholder.com/300x300?text=Sin+Imagen";
+      const precio = Number(producto.price || 0);
 
-      const codigo = prod.id !== undefined && prod.id !== null && prod.id !== ""
-        ? prod.id
+      const codigo = producto.id !== undefined && producto.id !== null && producto.id !== ""
+        ? producto.id
         : "-";
 
       const card = document.createElement("div");
       card.className = "card";
 
       card.innerHTML = `
-        <img src="${imagen}" alt="${prod.name}">
+        <img src="${imagen}" alt="${producto.name}">
         <div class="body">
           <div class="product-id">N°: ${codigo}</div>
-          <div class="name">${prod.name}</div>
-          <div class="price">$${fmtCOP(precio)}</div>
+          <div class="name">${producto.name}</div>
+          <div class="price">$${precio.toLocaleString("es-CO")}</div>
           <button class="btn-add">Agregar al carrito</button>
         </div>
       `;
 
       card.querySelector(".btn-add")
-        .addEventListener("click", () => addToCart(prod));
+        .addEventListener("click", () => addToCart(producto));
 
       gridDiv.appendChild(card);
     });
@@ -263,25 +263,25 @@ function filtrarCatalogo() {
     const gridDiv = document.createElement("div");
     gridDiv.className = "catalogo-grid";
 
-    productos.forEach(prod => {
-      const imagen = prod.img || "https://via.placeholder.com/300x300?text=Sin+Imagen";
-      const precio = getProductPrice(prod);
+    productos.forEach(producto => {
+      const imagen = producto.img || "https://via.placeholder.com/300x300?text=Sin+Imagen";
+      const precio = Number(producto.price || 0);
 
       const card = document.createElement("div");
       card.className = "card";
 
       card.innerHTML = `
-        <img src="${imagen}" alt="${prod.name}">
+        <img src="${imagen}" alt="${producto.name}">
         <div class="body">
-          <div class="product-id">N°: ${prod.id}</div>
-          <div class="name">${prod.name}</div>
-          <div class="price">$${fmtCOP(precio)}</div>
+          <div class="product-id">N°: ${producto.id}</div>
+          <div class="name">${producto.name}</div>
+          <div class="price">$${precio.toLocaleString("es-CO")}</div>
           <button class="btn-add">Agregar al carrito</button>
         </div>
       `;
 
       card.querySelector(".btn-add")
-        .addEventListener("click", () => addToCart(prod));
+        .addEventListener("click", () => addToCart(producto));
 
       gridDiv.appendChild(card);
     });
