@@ -94,7 +94,7 @@ function renderCatalogoPorCategorias() {
     gridDiv.className = "catalogo-grid";
 
     productos.forEach(prod => {
-      if (!prod.img) return;
+      const imagen = prod.img || "https://via.placeholder.com/300x300?text=Sin+Imagen";
 
       const codigo = prod.id !== undefined && prod.id !== null && prod.id !== ""
         ? prod.id
@@ -104,7 +104,7 @@ function renderCatalogoPorCategorias() {
       card.className = "card";
 
       card.innerHTML = `
-        <img src="${prod.img}" alt="${prod.name}">
+        <img src="${imagen}" alt="${prod.name}">
         <div class="body">
           <div class="product-id">N°: ${codigo}</div>
           <div class="name">${prod.name}</div>
@@ -180,13 +180,13 @@ function filtrarCatalogo() {
     gridDiv.className = "catalogo-grid";
 
     productos.forEach(prod => {
-      if (!prod.img) return;
+      const imagen = prod.img || "https://via.placeholder.com/300x300?text=Sin+Imagen";
 
       const card = document.createElement("div");
       card.className = "card";
 
       card.innerHTML = `
-        <img src="${prod.img}" alt="${prod.name}">
+        <img src="${imagen}" alt="${prod.name}">
         <div class="body">
           <div class="product-id">N°: ${prod.id}</div>
           <div class="name">${prod.name}</div>
