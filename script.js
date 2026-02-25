@@ -59,6 +59,7 @@ async function init() {
     }
 
     const payload = data && typeof data === "object" ? data : {};
+    const nestedData = payload.data && typeof payload.data === "object" ? payload.data : {};
     const backendError = typeof payload.error === "string" && payload.error.trim() !== "";
 
     if (backendError) {
@@ -73,7 +74,11 @@ async function init() {
       return;
     }
 
-    state.catalogo = Array.isArray(payload.catalogo) ? payload.catalogo : [];
+    const catalogoBackend = Array.isArray(payload.catalogo)
+      ? payload.catalogo
+      : (Array.isArray(nestedData.catalogo) ? nestedData.catalogo : []);
+
+    state.catalogo = catalogoBackend;
     state.catalogoEnriquecido = enriquecerCatalogoCategorias(state.catalogo);
 
     if (DEBUG_INIT) {
@@ -82,8 +87,12 @@ async function init() {
     }
     
     // 🛠️ Fallback: si el backend no provee barrios, cargamos set local de ejemplo
-    state.barrios = (payload.barrios && Object.keys(payload.barrios).length > 0)
+    const barriosBackend = (payload.barrios && typeof payload.barrios === "object")
       ? payload.barrios
+      : ((nestedData.barrios && typeof nestedData.barrios === "object") ? nestedData.barrios : null);
+
+    state.barrios = (barriosBackend && Object.keys(barriosBackend).length > 0)
+      ? barriosBackend
       : {
           "Barrio Central": 8000,
           "Barrio Norte": 10000,
