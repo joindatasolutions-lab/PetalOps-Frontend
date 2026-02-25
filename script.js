@@ -31,6 +31,11 @@ const state = {
  */
 const fmtCOP = v => Number(v || 0).toLocaleString('es-CO');
 
+function getProductPrice(producto) {
+  const precio = producto?.price ?? producto?.[" price"];
+  return Number(precio || 0);
+}
+
 /**
  * Inicializa la aplicación cargando datos del servidor
  * @async
@@ -173,6 +178,7 @@ function renderCatalogoPorCategorias() {
 
     productos.forEach(prod => {
       const imagen = prod.img || "https://via.placeholder.com/300x300?text=Sin+Imagen";
+      const precio = getProductPrice(prod);
 
       const codigo = prod.id !== undefined && prod.id !== null && prod.id !== ""
         ? prod.id
@@ -186,7 +192,7 @@ function renderCatalogoPorCategorias() {
         <div class="body">
           <div class="product-id">N°: ${codigo}</div>
           <div class="name">${prod.name}</div>
-          <div class="price">$${fmtCOP(prod.price)}</div>
+          <div class="price">$${fmtCOP(precio)}</div>
           <button class="btn-add">Agregar al carrito</button>
         </div>
       `;
@@ -259,6 +265,7 @@ function filtrarCatalogo() {
 
     productos.forEach(prod => {
       const imagen = prod.img || "https://via.placeholder.com/300x300?text=Sin+Imagen";
+      const precio = getProductPrice(prod);
 
       const card = document.createElement("div");
       card.className = "card";
@@ -268,7 +275,7 @@ function filtrarCatalogo() {
         <div class="body">
           <div class="product-id">N°: ${prod.id}</div>
           <div class="name">${prod.name}</div>
-          <div class="price">$${fmtCOP(prod.price)}</div>
+          <div class="price">$${fmtCOP(precio)}</div>
           <button class="btn-add">Agregar al carrito</button>
         </div>
       `;
@@ -482,13 +489,14 @@ function renderDrawerCart() {
     cont.innerHTML = `<p style="text-align:center;color:#666;">Tu carrito está vacío 🛒</p>`;
   } else {
     state.cart.forEach(p => {
-      const sub = p.price * p.qty;
+      const precioUnitario = getProductPrice(p);
+      const sub = precioUnitario * p.qty;
       subtotal += sub;
       cont.innerHTML += `
         <li class="cart-item">
           <div>
             <div class="name">${p.name}</div>
-            <div class="price">$${fmtCOP(p.price)} c/u</div>
+            <div class="price">$${fmtCOP(precioUnitario)} c/u</div>
           </div>
           <div class="qty">
             <button onclick="changeQty('${p.name}', -1)">−</button>
@@ -550,7 +558,7 @@ if (typeof document !== 'undefined') {
       const drawer = document.getElementById("drawerCarrito");
       if (drawer) drawer.classList.remove("open");
       const resumen = state.cart.map(p => `${p.qty}x ${p.name}`).join(" | ");
-      const subtotal = state.cart.reduce((a, b) => a + b.price * b.qty, 0);
+      const subtotal = state.cart.reduce((a, b) => a + getProductPrice(b) * b.qty, 0);
       const resumenProducto = document.getElementById("resumenProducto");
       if (resumenProducto) {
         resumenProducto.textContent =
@@ -762,7 +770,7 @@ if (typeof document !== 'undefined') {
   // ============================================================
   const productos = state.cart.map(p => `${p.qty}× ${p.name}`).join(" | ");
   const cantidad = state.cart.reduce((a, p) => a + p.qty, 0);
-  const subtotal = state.cart.reduce((a, p) => a + p.price * p.qty, 0);
+  const subtotal = state.cart.reduce((a, p) => a + getProductPrice(p) * p.qty, 0);
   const iva = state.iva || 0;
   const domicilio = state.domicilio || 0;
   const total = subtotal + iva + domicilio;
