@@ -9,6 +9,8 @@ const assert = require('node:assert');
 const {
   fmtCOP,
   extraerEmailDeData,
+  normalizarTexto,
+  filtrarCatalogoPorCategoriaNormalizada,
   SCRIPT_URL,
   ORIGEN_CATALOGO
 } = require('../script.js');
@@ -184,5 +186,24 @@ describe('Integración - Flujo de datos típico', () => {
     assert.strictEqual(preciosFormateados[0], '50.000');
     assert.strictEqual(preciosFormateados[1], '75.000');
     assert.strictEqual(preciosFormateados[2], '120.000');
+  });
+});
+
+describe('Normalización y filtro de categorías', () => {
+  it('normalizarTexto debe remover acentos, trim y minúsculas', () => {
+    assert.strictEqual(normalizarTexto('  Colección  '), 'coleccion');
+    assert.strictEqual(normalizarTexto('BOUQUETS'), 'bouquets');
+  });
+
+  it('debe filtrar categorías sin depender de tildes o mayúsculas', () => {
+    const catalogo = [
+      { id: 1, name: 'Producto A', Categoria: 'Coleccion' },
+      { id: 2, name: 'Producto B', Categoria: 'Bouquets' }
+    ];
+
+    const filtrado = filtrarCatalogoPorCategoriaNormalizada(catalogo, '  Colección ');
+
+    assert.strictEqual(filtrado.length, 1);
+    assert.strictEqual(filtrado[0].name, 'Producto A');
   });
 });

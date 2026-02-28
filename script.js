@@ -1468,6 +1468,8 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     fmtCOP,
     extraerEmailDeData,
+    normalizarTexto,
+    filtrarCatalogoPorCategoriaNormalizada,
     SCRIPT_URL,
     ORIGEN_CATALOGO
   };
