@@ -103,7 +103,7 @@ function normalizarTexto(texto) {
     ?.toString()
     .trim()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replaceAll(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 }
 
@@ -118,11 +118,12 @@ function enriquecerCatalogoConCategoriaFuente(catalogo = []) {
   }));
 }
 
-function filtrarCatalogoPorCategoriaNormalizada(catalogo = [], categoriaSeleccionada) {
+function filtrarCatalogoPorCategoriaNormalizada(catalogo, categoriaSeleccionada) {
+  const listaCatalogo = Array.isArray(catalogo) ? catalogo : [];
   const categoriaNormalizada = normalizarTexto(categoriaSeleccionada);
-  if (!categoriaNormalizada) return catalogo;
+  if (!categoriaNormalizada) return listaCatalogo;
 
-  return catalogo.filter(producto =>
+  return listaCatalogo.filter(producto =>
     normalizarTexto(obtenerCategoriaProducto(producto)) === categoriaNormalizada
   );
 }
