@@ -98,6 +98,49 @@ function scrollSuaveAElemento(elemento, duracion = 380) {
  */
 const fmtCOP = v => Number(v || 0).toLocaleString('es-CO');
 
+function normalizarTexto(texto) {
+  return texto
+    ?.toString()
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function obtenerCategoriaProducto(producto) {
+  return producto?.Categoria || producto?.categoria || obtenerCategoria(producto?.id);
+}
+
+function enriquecerCatalogoConCategoriaFuente(catalogo = []) {
+  return catalogo.map(producto => ({
+    ...producto,
+    categoria: obtenerCategoriaProducto(producto)
+  }));
+}
+
+function filtrarCatalogoPorCategoriaNormalizada(catalogo = [], categoriaSeleccionada) {
+  const categoriaNormalizada = normalizarTexto(categoriaSeleccionada);
+  if (!categoriaNormalizada) return catalogo;
+
+  return catalogo.filter(producto =>
+    normalizarTexto(obtenerCategoriaProducto(producto)) === categoriaNormalizada
+  );
+}
+
+function obtenerCategoriasDinamicas(catalogo = []) {
+  const categoriasUnicas = new Set();
+
+  catalogo.forEach(producto => {
+    const categoriaOriginal = obtenerCategoriaProducto(producto);
+    const categoriaLimpia = categoriaOriginal?.toString().trim();
+    if (categoriaLimpia) categoriasUnicas.add(categoriaLimpia);
+  });
+
+  return [...categoriasUnicas].sort((a, b) =>
+    a.localeCompare(b, 'es', { sensitivity: 'base' })
+  );
+}
+
 /**
  * Inicializa la aplicación cargando datos del servidor
  * @async
@@ -106,10 +149,17 @@ const fmtCOP = v => Number(v || 0).toLocaleString('es-CO');
 async function init() {
   try {
     const res = await fetch(SCRIPT_URL);
-    const data = await res.json();
-    state.catalogo = data.catalogo || [];
-    state.catalogoEnriquecido = enriquecerCatalogoCategorias(state.catalogo);
-    state.barrios = data.barrios || {};
+    const response = await res.json();
+
+    if (!response?.ok) {
+      console.error("Error al cargar datos:", response);
+      return;
+    }
+
+    const payload = response?.data || {};
+    state.catalogo = payload.catalogo || [];
+    state.catalogoEnriquecido = enriquecerCatalogoConCategoriaFuente(state.catalogo);
+    state.barrios = payload.barrios || {};
     renderCatalogoPorCategorias();
     fillBarrios();
     fillFiltrosCategorias();
@@ -126,7 +176,7 @@ function renderCatalogoPorCategorias() {
 
   // Filtrar por categoría si está seleccionada
   const catalogoParaMostrar = state.categoriaSeleccionada
-    ? filtrarPorCategoria(state.catalogoEnriquecido, state.categoriaSeleccionada)
+    ? filtrarCatalogoPorCategoriaNormalizada(state.catalogoEnriquecido, state.categoriaSeleccionada)
     : state.catalogoEnriquecido;
 
   // Agrupar por categoría
@@ -366,22 +416,21 @@ function fillFiltrosCategorias() {
   
   if (!filtroSelect) return;
 
-  // Llenar opciones
-  const categorias = obtenerTodasLasCategorias();
-  const options = filtroSelect.querySelectorAll("option");
-  
-  // Agregar nuevas opciones si no existen
-  categorias.forEach(cat => {
-    if (![...options].some(o => o.value === cat)) {
-      const op = document.createElement("option");
-      op.value = cat;
-      op.textContent = cat;
-      filtroSelect.appendChild(op);
-    }
+  const categorias = obtenerCategoriasDinamicas(state.catalogoEnriquecido);
+  filtroSelect.innerHTML = "<option value=\"\">Todas las categorías</option>";
+
+  categorias.forEach(categoria => {
+    const opcion = document.createElement("option");
+    opcion.value = categoria;
+    opcion.textContent = categoria;
+    filtroSelect.appendChild(opcion);
   });
 
   // Evento de cambio
-  filtroSelect.addEventListener("change", (e) => {
+  if (filtroSelect.dataset.bound === "true") return;
+  filtroSelect.dataset.bound = "true";
+
+  filtroSelect.addEventListener("change", e => {
     state.categoriaSeleccionada = e.target.value || null;
     document.getElementById("searchInput").value = "";
     renderCatalogoPorCategorias();
