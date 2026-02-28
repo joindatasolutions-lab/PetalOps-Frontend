@@ -10,7 +10,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Leer el archivo HTML
-const htmlPath = path.join(__dirname, '..', 'html', 'index.html');
+const htmlPath = path.join(__dirname, '..', 'index.html');
 const htmlContent = fs.readFileSync(htmlPath, 'utf-8');
 
 describe('index.html - Estructura básica', () => {
@@ -133,15 +133,15 @@ describe('index.html - Opciones de tipo de lugar', () => {
   });
 
   it('debe incluir botón para avanzar de paso', () => {
-    assert.ok(htmlContent.includes('id="btnNextStep"'));
+    assert.ok(htmlContent.includes('data-wizard-next'));
   });
 
   it('debe incluir botón para retroceder de paso', () => {
-    assert.ok(htmlContent.includes('id="btnPrevStep"'));
+    assert.ok(htmlContent.includes('data-wizard-prev'));
   });
 
   it('debe incluir campo de búsqueda de barrio', () => {
-    assert.ok(htmlContent.includes('id="barrioSearch"'));
+    assert.ok(htmlContent.includes('id="buscarBarrio"'));
   });
 });
 
@@ -155,7 +155,7 @@ describe('index.html - Elementos del carrito', () => {
   });
 
   it('debe tener botón de carrito flotante (FAB)', () => {
-    assert.ok(htmlContent.includes('cart-fab') || htmlContent.includes('Ver Carrito'));
+    assert.ok(htmlContent.includes('sticky-cart') || htmlContent.includes('btnCheckoutSticky'));
   });
 });
 

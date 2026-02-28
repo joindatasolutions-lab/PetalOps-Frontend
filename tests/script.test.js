@@ -11,7 +11,7 @@ const {
   extraerEmailDeData,
   SCRIPT_URL,
   ORIGEN_CATALOGO
-} = require('../js/script.js');
+} = require('../script.js');
 
 describe('fmtCOP - Formateo de moneda colombiana', () => {
   it('debe formatear números correctamente con separadores de miles', () => {

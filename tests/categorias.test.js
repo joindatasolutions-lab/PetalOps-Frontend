@@ -20,10 +20,10 @@ describe('obtenerCategoria', () => {
     assert.strictEqual(obtenerCategoria(95), 'Personalizados');
   });
 
-  it('debe retornar "Flora boxes" para números 1-32', () => {
-    assert.strictEqual(obtenerCategoria(1), 'Flora boxes');
-    assert.strictEqual(obtenerCategoria(16), 'Flora boxes');
-    assert.strictEqual(obtenerCategoria(32), 'Flora boxes');
+  it('debe retornar "Coleccion" para números 2-4', () => {
+    assert.strictEqual(obtenerCategoria(2), 'Coleccion');
+    assert.strictEqual(obtenerCategoria(3), 'Coleccion');
+    assert.strictEqual(obtenerCategoria(4), 'Coleccion');
   });
 
   it('debe retornar "Flora canasto" para números 33-41', () => {
@@ -31,9 +31,9 @@ describe('obtenerCategoria', () => {
     assert.strictEqual(obtenerCategoria(41), 'Flora canasto');
   });
 
-  it('debe retornar "Flora bouquets" para números 42-53', () => {
-    assert.strictEqual(obtenerCategoria(42), 'Flora bouquets');
-    assert.strictEqual(obtenerCategoria(53), 'Flora bouquets');
+  it('debe retornar "Bouquets" para números 5-6', () => {
+    assert.strictEqual(obtenerCategoria(5), 'Bouquets');
+    assert.strictEqual(obtenerCategoria(6), 'Bouquets');
   });
 
   it('debe retornar "Adicionales" para números 80-94', () => {
@@ -42,14 +42,14 @@ describe('obtenerCategoria', () => {
   });
 
   it('debe retornar "Sin categoría" para números fuera de rango', () => {
-    assert.strictEqual(obtenerCategoria(0), 'Sin categoría');
+    assert.strictEqual(obtenerCategoria(1), 'Sin categoría');
     assert.strictEqual(obtenerCategoria(96), 'Sin categoría');
     assert.strictEqual(obtenerCategoria(200), 'Sin categoría');
   });
 
   it('debe manejar strings numéricos convirtiéndolos', () => {
     assert.strictEqual(obtenerCategoria('95'), 'Personalizados');
-    assert.strictEqual(obtenerCategoria('1'), 'Flora boxes');
+    assert.strictEqual(obtenerCategoria('2'), 'Coleccion');
   });
 
   it('debe retornar "Sin categoría" para valores no numéricos', () => {
@@ -65,13 +65,13 @@ describe('obtenerTodasLasCategorias', () => {
     assert.strictEqual(Array.isArray(categorias), true);
     assert.strictEqual(categorias.length, 10);
     assert.strictEqual(categorias[0], 'Personalizados');
-    assert.strictEqual(categorias[1], 'Flora boxes');
+    assert.strictEqual(categorias[1], 'Coleccion');
   });
 
   it('debe incluir todas las categorías definidas', () => {
     const categorias = obtenerTodasLasCategorias();
     assert.ok(categorias.includes('Personalizados'));
-    assert.ok(categorias.includes('Flora boxes'));
+    assert.ok(categorias.includes('Coleccion'));
     assert.ok(categorias.includes('Adicionales'));
     assert.ok(categorias.includes('Condolencias'));
   });
@@ -80,18 +80,18 @@ describe('obtenerTodasLasCategorias', () => {
 describe('enriquecerCatalogoCategorias', () => {
   it('debe agregar campo "categoria" a cada producto', () => {
     const catalogo = [
-      { id: 1, name: 'Producto 1', price: 100 },
+      { id: 2, name: 'Producto 2', price: 100 },
       { id: 95, name: 'Producto 95', price: 200 }
     ];
 
     const enriquecido = enriquecerCatalogoCategorias(catalogo);
     
-    assert.strictEqual(enriquecido[0].categoria, 'Flora boxes');
+    assert.strictEqual(enriquecido[0].categoria, 'Coleccion');
     assert.strictEqual(enriquecido[1].categoria, 'Personalizados');
   });
 
   it('no debe modificar el catálogo original', () => {
-    const catalogo = [{ id: 1, name: 'Producto 1', price: 100 }];
+    const catalogo = [{ id: 2, name: 'Producto 2', price: 100 }];
     const original = JSON.parse(JSON.stringify(catalogo));
 
     enriquecerCatalogoCategorias(catalogo);
@@ -102,7 +102,7 @@ describe('enriquecerCatalogoCategorias', () => {
   it('debe preservar todas las propiedades originales', () => {
     const catalogo = [
       { 
-        id: 42, 
+        id: 5,
         name: 'Bouquet Rosa', 
         price: 150, 
         img: 'img.jpg',
@@ -112,32 +112,32 @@ describe('enriquecerCatalogoCategorias', () => {
 
     const enriquecido = enriquecerCatalogoCategorias(catalogo);
     
-    assert.strictEqual(enriquecido[0].id, 42);
+    assert.strictEqual(enriquecido[0].id, 5);
     assert.strictEqual(enriquecido[0].name, 'Bouquet Rosa');
     assert.strictEqual(enriquecido[0].price, 150);
     assert.strictEqual(enriquecido[0].img, 'img.jpg');
     assert.strictEqual(enriquecido[0].stock, 10);
-    assert.strictEqual(enriquecido[0].categoria, 'Flora bouquets');
+    assert.strictEqual(enriquecido[0].categoria, 'Bouquets');
   });
 });
 
 describe('agruparPorCategoria', () => {
   it('debe agrupar productos por categoría correctamente', () => {
     const catalogo = [
-      { id: 1, name: 'Box 1', categoria: 'Flora boxes' },
-      { id: 2, name: 'Box 2', categoria: 'Flora boxes' },
+      { id: 2, name: 'Coleccion 1', categoria: 'Coleccion' },
+      { id: 3, name: 'Coleccion 2', categoria: 'Coleccion' },
       { id: 95, name: 'Personalizado', categoria: 'Personalizados' }
     ];
 
     const grupos = agruparPorCategoria(catalogo);
     
-    assert.strictEqual(grupos['Flora boxes'].length, 2);
+    assert.strictEqual(grupos['Coleccion'].length, 2);
     assert.strictEqual(grupos['Personalizados'].length, 1);
   });
 
   it('debe inicializar todas las categorías aunque estén vacías', () => {
     const catalogo = [
-      { id: 1, name: 'Box 1', categoria: 'Flora boxes' }
+      { id: 2, name: 'Coleccion 1', categoria: 'Coleccion' }
     ];
 
     const grupos = agruparPorCategoria(catalogo);
@@ -151,12 +151,12 @@ describe('agruparPorCategoria', () => {
 
   it('debe inferir categoría si no está presente en el producto', () => {
     const catalogo = [
-      { id: 42, name: 'Bouquet' }
+      { id: 5, name: 'Bouquet' }
     ];
 
     const grupos = agruparPorCategoria(catalogo);
     
-    assert.strictEqual(grupos['Flora bouquets'].length, 1);
+    assert.strictEqual(grupos['Bouquets'].length, 1);
   });
 
   it('debe manejar productos sin categoría', () => {
@@ -173,20 +173,20 @@ describe('agruparPorCategoria', () => {
 
 describe('filtrarPorCategoria', () => {
   const catalogo = [
-    { id: 1, name: 'Box 1', categoria: 'Flora boxes' },
+    { id: 2, name: 'Coleccion 1', categoria: 'Coleccion' },
     { id: 95, name: 'Personalizado', categoria: 'Personalizados' },
     { id: 80, name: 'Adicional', categoria: 'Adicionales' }
   ];
 
   it('debe filtrar por una sola categoría (string)', () => {
-    const filtrado = filtrarPorCategoria(catalogo, 'Flora boxes');
+    const filtrado = filtrarPorCategoria(catalogo, 'Coleccion');
     
     assert.strictEqual(filtrado.length, 1);
-    assert.strictEqual(filtrado[0].name, 'Box 1');
+    assert.strictEqual(filtrado[0].name, 'Coleccion 1');
   });
 
   it('debe filtrar por múltiples categorías (array)', () => {
-    const filtrado = filtrarPorCategoria(catalogo, ['Flora boxes', 'Personalizados']);
+    const filtrado = filtrarPorCategoria(catalogo, ['Coleccion', 'Personalizados']);
     
     assert.strictEqual(filtrado.length, 2);
   });
@@ -199,7 +199,7 @@ describe('filtrarPorCategoria', () => {
 
   it('debe inferir categoría si no está presente en el producto', () => {
     const catalogoSinCat = [
-      { id: 1, name: 'Box 1' },
+      { id: 2, name: 'Coleccion 1' },
       { id: 95, name: 'Personalizado' }
     ];
 
@@ -229,8 +229,8 @@ describe('CATEGORIAS_MAP', () => {
     const personalizados = CATEGORIAS_MAP.find(c => c.nombre === 'Personalizados');
     assert.deepStrictEqual(personalizados.rango, [95, 95]);
 
-    const boxes = CATEGORIAS_MAP.find(c => c.nombre === 'Flora boxes');
-    assert.deepStrictEqual(boxes.rango, [1, 32]);
+    const coleccion = CATEGORIAS_MAP.find(c => c.nombre === 'Coleccion');
+    assert.deepStrictEqual(coleccion.rango, [2, 4]);
 
     const adicionales = CATEGORIAS_MAP.find(c => c.nombre === 'Adicionales');
     assert.deepStrictEqual(adicionales.rango, [80, 94]);

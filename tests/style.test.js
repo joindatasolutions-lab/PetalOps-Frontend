@@ -10,7 +10,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Leer el archivo CSS
-const cssPath = path.join(__dirname, '..', 'css', 'style.css');
+const cssPath = path.join(__dirname, '..', 'style.css');
 const cssContent = fs.readFileSync(cssPath, 'utf-8');
 
 describe('style.css - Variables CSS', () => {
@@ -149,15 +149,15 @@ describe('style.css - Estilos del filtro de categorías', () => {
 
 describe('style.css - Estilos del carrito', () => {
   it('debe tener estilos para .drawer', () => {
-    assert.ok(cssContent.includes('.drawer'));
+    assert.ok(cssContent.includes('.drawer') || cssContent.includes('.cart-modal'));
   });
 
   it('debe tener estilos para .cart-fab (botón flotante)', () => {
-    assert.ok(cssContent.includes('.cart-fab'));
+    assert.ok(cssContent.includes('.sticky-cart'));
   });
 
   it('debe tener estilos para #cartCount', () => {
-    assert.ok(cssContent.includes('#cartCount') || cssContent.includes('cartCount'));
+    assert.ok(cssContent.includes('.cart-count') || cssContent.includes('#cartCount'));
   });
 });
 

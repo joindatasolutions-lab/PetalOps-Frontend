@@ -8,11 +8,11 @@ const CATEGORIAS_MAP = [
   { nombre: 'Coleccion', rango: [2, 4] },
   { nombre: 'Flora canasto', rango: [33, 41] },
   { nombre: 'Bouquets', rango: [5, 6] },
-  { nombre: 'Corazones', rango: [7,8] },
+  { nombre: 'Corazones', rango: [7, 7] },
   { nombre: 'Madera', rango: [60, 67] },
   { nombre: 'Cerámica & vidrio', rango: [68, 71] },
   { nombre: 'Anchetas', rango: [72, 74] },
-  { nombre: 'Condolencias', rango: [8] },
+  { nombre: 'Condolencias', rango: [8, 8] },
   { nombre: 'Adicionales', rango: [80, 94] }
 ];
 
