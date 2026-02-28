@@ -10,7 +10,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Leer el archivo HTML
-const htmlPath = path.join(__dirname, '..', 'index.html');
+const htmlPath = path.join(__dirname, '..', 'html', 'index.html');
 const htmlContent = fs.readFileSync(htmlPath, 'utf-8');
 
 describe('index.html - Estructura básica', () => {
@@ -110,12 +110,8 @@ describe('index.html - Elementos del formulario', () => {
     assert.ok(htmlContent.includes('id="barrio"'));
   });
 
-  it('debe tener select de tipo de lugar con id="tipoLugar"', () => {
-    assert.ok(htmlContent.includes('id="tipoLugar"'));
-  });
-
-  it('debe tener input de dirección', () => {
-    assert.ok(htmlContent.includes('id="direccion"'));
+  it('debe tener input de dirección completa', () => {
+    assert.ok(htmlContent.includes('id="direccionCompleta"'));
   });
 
   it('debe tener input de destinatario', () => {
@@ -132,28 +128,20 @@ describe('index.html - Elementos del formulario', () => {
 });
 
 describe('index.html - Opciones de tipo de lugar', () => {
-  it('debe incluir opción "Entrega En Tienda"', () => {
-    assert.ok(htmlContent.includes('Entrega En Tienda'));
+  it('debe incluir la sección de progreso del wizard', () => {
+    assert.ok(htmlContent.includes('wizard-progress'));
   });
 
-  it('debe incluir opción "Casa"', () => {
-    assert.ok(htmlContent.includes('Casa'));
+  it('debe incluir botón para avanzar de paso', () => {
+    assert.ok(htmlContent.includes('id="btnNextStep"'));
   });
 
-  it('debe incluir opción "Edificio"', () => {
-    assert.ok(htmlContent.includes('Edificio'));
+  it('debe incluir botón para retroceder de paso', () => {
+    assert.ok(htmlContent.includes('id="btnPrevStep"'));
   });
 
-  it('debe incluir opción "Hotel"', () => {
-    assert.ok(htmlContent.includes('Hotel'));
-  });
-
-  it('debe incluir opción "Restaurante"', () => {
-    assert.ok(htmlContent.includes('Restaurante'));
-  });
-
-  it('debe incluir opción "Clinica"', () => {
-    assert.ok(htmlContent.includes('Clinica') || htmlContent.includes('Clínica'));
+  it('debe incluir campo de búsqueda de barrio', () => {
+    assert.ok(htmlContent.includes('id="barrioSearch"'));
   });
 });
 

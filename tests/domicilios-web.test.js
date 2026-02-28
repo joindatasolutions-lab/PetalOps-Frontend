@@ -8,7 +8,7 @@ const {
   formatearFechaEntrega,
   ordenarUnicos,
   isOkResponse
-} = require('../domicilios-web.js');
+} = require('../js/domicilios-web.js');
 
 test('normalizarTexto elimina tildes y pasa a minúsculas', () => {
   assert.equal(normalizarTexto('ÓSCAR Núñez'), 'oscar nunez');

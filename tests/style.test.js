@@ -10,7 +10,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Leer el archivo CSS
-const cssPath = path.join(__dirname, '..', 'style.css');
+const cssPath = path.join(__dirname, '..', 'css', 'style.css');
 const cssContent = fs.readFileSync(cssPath, 'utf-8');
 
 describe('style.css - Variables CSS', () => {

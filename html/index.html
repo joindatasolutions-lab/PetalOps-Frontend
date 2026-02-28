@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PetalOps | Flores que Enamoran</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+
+<body>
+  <header class="catalog-header">
+    <div class="logo-area">
+      <img src="../img/PetalOps Logo.png" alt="PetalOps Logo">
+    </div>
+
+    <div class="title-area">
+      <h2>Colección PetalOps</h2>
+    </div>
+
+    <div class="controls-area">
+      <div class="search-box">
+        <label for="searchInput" class="visually-hidden">Buscar productos</label>
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Buscar..." 
+          oninput="filtrarCatalogo()"
+          aria-label="Buscar en el catálogo">
+      </div>
+
+      <div class="filtro-categorias-container">
+        <label class="filtro-label" for="filtroCategorias">Categoría:</label>
+        <select id="filtroCategorias" class="filtro-select">
+          <option value="">Todas las categorías</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <section id="viewCatalog" class="view active">
+    <div style="text-align:center; margin-bottom:20px;">
+      <button class="btn-primary" id="btnIrPersonalizado">🌸 Crear Arreglo Personalizado</button>
+    </div>
+    <div id="catalogo" class="catalogo" role="list"></div>
+  </section>
+
+  <div id="cartModal" class="cart-modal hidden">
+    <div class="cart-content">
+      <div class="drawer-header">
+        <strong>🛍️ Tu carrito</strong>
+        <button id="cerrarDrawer" class="icon-btn">✕</button>
+      </div>
+      <div class="drawer-body">
+        <ul id="cartItemsDrawer" class="cart-list"></ul>
+        <div class="drawer-footer">
+          <div class="subtotal">
+            <p><strong>Subtotal:</strong> $<span id="subtotalDrawer">0</span></p>
+            <p><strong>IVA:</strong> $<span id="ivaDrawer">0</span></p>
+            <p><strong>Domicilio:</strong> $<span id="domicilioDrawer">0</span></p>
+            <h3><strong>Total:</strong> $<span id="totalDrawer">0</span></h3>
+          </div>
+          <div class="drawer-actions">
+            <button id="vaciarCarrito" class="btn-outline">Vaciar</button>
+            <button id="btnPedidoDrawer" class="btn-primary">Continuar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="btnDrawer" class="sticky-cart">
+    <div class="cart-summary">
+      <div id="cartCount" class="cart-count">0 productos</div>
+      <div id="cartTotal" class="cart-total">$0</div>
+    </div>
+    <button type="button" id="btnCheckoutSticky" class="btn-checkout">Continuar →</button>
+  </div>
+
+  <section id="viewForm" class="view">
+    <form id="pedidoForm">
+      <div class="pedido-summary" id="resumenProducto">🛍 Tu pedido</div>
+
+      <div class="wizard-progress">
+        <div class="wizard-progress-head">
+          <span id="wizardStepText">Paso 1 de 4</span>
+          <span id="wizardStepLabel">Información del cliente</span>
+        </div>
+        <div class="wizard-progress-track">
+          <div id="wizardProgressFill" class="wizard-progress-fill"></div>
+        </div>
+      </div>
+
+      <div class="wizard-step active" data-step="1" data-title="Información del cliente">
+        <h3>Información del cliente <span id="badgeCliente" class="badge warn">Nuevo cliente</span></h3>
+        <div class="grid">
+          <div>
+            <label for="tipoIdent">Tipo de identificación</label>
+            <select id="tipoIdent" name="tipoIdent" required>
+              <option value="CEDULA" selected>Cédula</option>
+              <option value="NIT">NIT</option>
+              <option value="PASAPORTE">Pasaporte o ID</option>
+            </select>
+          </div>
+          <div>
+            <label for="identificacion">Identificación</label>
+            <input id="identificacion" type="number" name="identificacion" required>
+          </div>
+          <div>
+            <label for="telefono">Teléfono WhatsApp</label>
+            <div class="phone-input">
+              <input 
+                type="text" 
+                id="indicativo" 
+                class="prefix-input"
+                value="+57"
+                maxlength="4"
+              >
+              <input 
+                type="tel" 
+                id="telefono" 
+                name="telefono"
+                placeholder="3001234567"
+                maxlength="12"
+                required
+              >
+            </div>
+          </div>
+          <div>
+            <label for="nombreCompletoVisible">Nombre completo</label>
+            <input id="nombreCompletoVisible" type="text" required>
+            <input type="hidden" id="primerNombre" name="primerNombre">
+            <input type="hidden" id="primerApellido" name="primerApellido">
+          </div>
+          <div class="form-group">
+            <label for="email">Correo electrónico (opcional)</label>
+            <input 
+              id="email"
+              name="email"
+              type="email"
+              placeholder="ejemplo@correo.com">
+          </div>
+        </div>
+        <div class="actions wizard-actions">
+          <button type="button" class="btn-outline" id="btnVolver">Regresar</button>
+          <button type="button" class="btn-primary" data-wizard-next>Siguiente</button>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="2" data-title="Información de entrega">
+        <h3>Información de entrega</h3>
+        
+        <div class="delivery-toggle">
+          <label class="delivery-option">
+            <input type="radio" name="tipoEntrega" value="DOMICILIO" checked>
+            <span>Domicilio</span>
+          </label>
+          <label class="delivery-option">
+            <input type="radio" name="tipoEntrega" value="TIENDA">
+            <span>Recoger en tienda</span>
+          </label>
+        </div>
+
+        <div id="bloqueDireccion" class="bloque-direccion">
+          <div class="grid"> <div class="form-group">
+              <label for="destinatario">Nombre del destinatario *</label>
+              <input id="destinatario" name="destinatario" type="text" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="telefonoDestino">Teléfono destino *</label>
+              <div class="phone-fixed-wrapper">
+                <span class="phone-fixed-prefix">+57</span>
+                <input id="telefonoDestino" name="telefonoDestino" type="tel" placeholder="3001234567" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="direccionCompleta">Dirección completa *</label>
+              <input id="direccionCompleta" name="direccionCompleta" type="text" placeholder="Calle, Carrera, Apto..." required>
+            </div>
+
+            <div class="form-group">
+              <label for="buscarBarrio">Barrio de entrega *</label>
+              <div class="autocomplete-wrapper">
+                <input type="text" id="buscarBarrio" placeholder="Busca tu barrio..." autocomplete="off">
+                <div id="barrioSuggestions" class="autocomplete-list"></div>
+              </div>
+              <input type="hidden" id="barrio" name="barrio" required>
+              <small id="barrioCostoInfo" class="help-text">Costo: $0</small>
+            </div>
+
+          </div> </div>
+
+        <div class="entrega-fecha-hora section-card" style="margin-top: 15px;">
+           <div class="grid">
+              <div>
+                <label for="fechaEntrega">Fecha de entrega</label>
+                <input id="fechaEntrega" name="fechaEntrega" type="date" required>
+              </div>
+              <div>
+                <label for="rangoHora">Rango de hora</label>
+                <select id="rangoHora" name="rangoHora" required>
+                   <option value="">Seleccione...</option>
+                   <option value="Mañana (8am - 12pm)">Mañana (8am - 12pm)</option>
+                   <option value="Tarde (2pm - 6pm)">Tarde (2pm - 6pm)</option>
+                </select>
+              </div>
+           </div>
+        </div>
+
+        <div class="actions wizard-actions">
+          <button type="button" class="btn-outline" data-wizard-prev>Anterior</button>
+          <button type="button" class="btn-primary" data-wizard-next>Siguiente</button>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="3" data-title="Mensaje">
+        <div class="section-card">
+          <h3 class="section-title">Mensaje para la tarjeta</h3>
+          <textarea id="mensaje" name="mensaje" placeholder="Escribe tu mensaje aquí..."></textarea>
+          <label for="firma" style="margin-top:10px; display:block;">Firma</label>
+          <input type="text" id="firma" name="firma" placeholder="Ej: Con amor, tu familia">
+        </div>
+
+        <div class="section-card">
+          <h3>Observaciones Especiales</h3>
+          <textarea id="observacionGeneral" name="observacionGeneral" placeholder="Notas adicionales para el pedido (opcional)."></textarea>
+        </div>
+
+        <div class="actions wizard-actions">
+          <button type="button" class="btn-outline" data-wizard-prev>Anterior</button>
+          <button type="button" class="btn-primary" data-wizard-next>Siguiente</button>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="4" data-title="Confirmación">
+        <h3>Resumen de confirmación</h3>
+        <div id="confirmSummary" class="confirm-summary"></div>
+        <div class="actions wizard-actions">
+          <button type="button" class="btn-outline" data-wizard-prev>Anterior</button>
+          <button type="submit" class="btn-primary" id="btnSubmit" disabled>Confirmar pedido</button>
+        </div>
+      </div>
+
+      <input type="hidden" id="domicilio" name="domicilio">
+      <input type="hidden" id="iva" name="iva">
+      <input type="hidden" id="total" name="total">
+    </form>
+  </section>
+
+  <script src="../js/categorias.js"></script>
+  <script src="../js/script.js?v=20260201"></script>
+</body>
+</html>

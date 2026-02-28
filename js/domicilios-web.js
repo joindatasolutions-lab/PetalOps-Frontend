@@ -748,7 +748,7 @@ function capturarFoto(pedidoNum, card, videoPreview, btnCapturar, imgPreview, bt
 function init() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(err => {
+      navigator.serviceWorker.register('../js/sw.js').catch(err => {
         console.error('No se pudo registrar el service worker:', err);
       });
     });

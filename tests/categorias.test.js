@@ -13,7 +13,7 @@ const {
   enriquecerCatalogoCategorias,
   agruparPorCategoria,
   filtrarPorCategoria
-} = require('../categorias.js');
+} = require('../js/categorias.js');
 
 describe('obtenerCategoria', () => {
   it('debe retornar "Personalizados" para el número 95', () => {
