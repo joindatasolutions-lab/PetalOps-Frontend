@@ -1,6 +1,7 @@
 const ORIGEN_CATALOGO = "normal";
 // === CONFIGURACIÓN GENERAL ===
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx6HiSaN138VRGRayGsmIULW0R4jsHgrvW0WJqy5tduClxPcA-6-M8HN06nfgRwFE8xew/exec";
+const API_URL = "http://127.0.0.1:8000";
 
 /**
  * Estado global de la aplicación
@@ -149,18 +150,21 @@ function obtenerCategoriasDinamicas(catalogo = []) {
  */
 async function init() {
   try {
-    const res = await fetch(SCRIPT_URL);
-    const response = await res.json();
-
-    if (!response?.ok) {
-      console.error("Error al cargar datos:", response);
-      return;
+    const res = await fetch(`${API_URL}/catalogo/1`);
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
     }
 
-    const payload = response?.data || {};
-    state.catalogo = payload.catalogo || [];
+    const data = await res.json();
+    state.catalogo = (Array.isArray(data) ? data : []).map(p => ({
+      id: p.idProducto,
+      name: p.nombreProducto,
+      price: p.precio,
+      img: p.imagenUrl,
+      Categoria: p.nombreCategoria
+    }));
     state.catalogoEnriquecido = enriquecerCatalogoConCategoriaFuente(state.catalogo);
-    state.barrios = payload.barrios || {};
+    state.barrios = {};
     renderCatalogoPorCategorias();
     fillBarrios();
     fillFiltrosCategorias();
@@ -1462,6 +1466,7 @@ if (typeof document !== 'undefined') {
 
   document.addEventListener("DOMContentLoaded", () => {
     init();
+    
   });
 }
 
