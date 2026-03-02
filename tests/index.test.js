@@ -40,16 +40,16 @@ describe('index.html - Estructura básica', () => {
 });
 
 describe('index.html - Enlaces a recursos', () => {
-  it('debe enlazar a style.css', () => {
-    assert.ok(htmlContent.includes('style.css'));
+  it('debe enlazar a styles/base.css', () => {
+    assert.ok(htmlContent.includes('styles/base.css'));
   });
 
-  it('debe enlazar a categorias.js', () => {
-    assert.ok(htmlContent.includes('categorias.js'));
+  it('debe usar entrypoint modular sin scripts legacy', () => {
+    assert.ok(!htmlContent.includes('categorias.js'));
   });
 
-  it('debe enlazar a script.js', () => {
-    assert.ok(htmlContent.includes('script.js'));
+  it('debe enlazar al entrypoint modular app/main.js', () => {
+    assert.ok(htmlContent.includes('app/main.js'));
   });
 
   it('debe incluir SweetAlert2', () => {
@@ -73,7 +73,7 @@ describe('index.html - Elementos del catálogo', () => {
   it('debe tener select de filtro de categorías con id="filtroCategorias"', () => {
     // El filtro se crea dinámicamente, pero verificamos que el comentario o referencia existe
     // O verificamos que el script lo menciona
-    assert.ok(true); // Este se crea dinámicamente en script.js
+    assert.ok(true); // Este se crea dinámicamente en app/domain/catalog
   });
 });
 
