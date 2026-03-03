@@ -21,6 +21,23 @@ export function createApiClient(config) {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       return Array.isArray(data) ? data : [];
+    },
+
+    async crearPedidoCheckout(payload) {
+      const response = await fetch(`${baseUrl}/pedido/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `HTTP ${response.status}`);
+      }
+
+      return response.json();
     }
   };
 }

@@ -4,6 +4,7 @@ import { formatearCOP, escaparHtml } from "../../shared/utils.js";
 export function initCheckoutModule({ store, bus, api, config }) {
   registerCheckoutInputBindings({ store, bus });
   registerWizardBindings({ store, bus });
+  registerCheckoutSubmit({ store, bus, api, config });
 
   bus.on("GO_TO_CHECKOUT", () => {
     console.log("EVENTO RECIBIDO EN CHECKOUT");
@@ -52,6 +53,8 @@ export function initCheckoutModule({ store, bus, api, config }) {
       const current = store.getState();
       const nextClient = {
         ...current.checkout.client,
+        tipoIdent: String(cliente.tipoIdent || current.checkout.client.tipoIdent || "CEDULA").trim(),
+        indicativo: String(cliente.indicativo || current.checkout.client.indicativo || "+57").trim(),
         nombreCompleto: construirNombreCliente(cliente),
         telefono: String(cliente.telefono || cliente.telefonoWhatsApp || "").trim(),
         email: String(cliente.email || "").trim()
@@ -73,6 +76,139 @@ export function initCheckoutModule({ store, bus, api, config }) {
   }, ["checkout", "cart"]);
 
   renderWizard(store.getState().checkout.wizard);
+}
+
+function registerCheckoutSubmit({ store, bus, api, config }) {
+  const form = dom.getById("pedidoForm");
+  const submit = dom.getById("btnSubmit");
+
+  dom.on(form, "submit", async event => {
+    event.preventDefault();
+
+    const current = store.getState();
+    const stepOneValidation = validateStepOne(current.checkout.client, false);
+    const stepTwoValidation = validateStepTwo(current.checkout, false);
+
+    if (!stepOneValidation.valid || !stepTwoValidation.valid) {
+      const ids = [...stepOneValidation.invalidIds, ...stepTwoValidation.invalidIds];
+      ids.forEach(id => dom.markInvalid(dom.getById(id)));
+      alert("Completa los campos obligatorios antes de confirmar el pedido.");
+      return;
+    }
+
+    if (!Array.isArray(current.cart.items) || current.cart.items.length === 0) {
+      alert("No hay productos en el carrito.");
+      return;
+    }
+
+    const payload = buildCheckoutPayload(current, config);
+
+    if (!payload.entrega.fechaEntrega) {
+      alert("Selecciona una fecha de entrega válida.");
+      return;
+    }
+
+    dom.setDisabled(submit, true);
+
+    try {
+      const result = await api.crearPedidoCheckout(payload);
+      alert(`Pedido registrado correctamente. Nro pedido: ${result.pedidoID}`);
+
+      bus.emit("cart:clear");
+
+      const next = store.getState();
+      store.setState({
+        checkout: {
+          client: {
+            tipoIdent: "CEDULA",
+            identificacion: "",
+            indicativo: "+57",
+            nombreCompleto: "",
+            telefono: "",
+            email: ""
+          },
+          delivery: {
+            ...next.checkout.delivery,
+            destinatario: "",
+            telefonoDestino: "",
+            direccionCompleta: "",
+            barrio: "",
+            barrioId: null,
+            costoDomicilio: 0,
+            fechaEntrega: "",
+            rangoHora: ""
+          },
+          extras: {
+            mensaje: "",
+            firma: "",
+            observacionGeneral: ""
+          },
+          wizard: {
+            ...next.checkout.wizard,
+            currentStep: 1
+          },
+          summary: {
+            missing: []
+          }
+        },
+        ui: {
+          currentView: "viewCatalog"
+        }
+      }, ["checkout", "ui"]);
+    } catch (error) {
+      console.error("Error enviando checkout:", error);
+      alert("No fue posible registrar el pedido. Revisa los datos e intenta de nuevo.");
+    } finally {
+      const latest = store.getState();
+      const summary = buildSummaryState(latest);
+      dom.setDisabled(submit, summary.missing.length > 0);
+    }
+  }, "boundPedidoFormSubmit");
+}
+
+function buildCheckoutPayload(state, config) {
+  return {
+    empresaID: Number(config.tenant.empresaId),
+    sucursalID: Number(config.tenant.sucursalId),
+    productos: state.cart.items.map(item => ({
+      productoID: Number(item.idProducto),
+      cantidad: Number(item.cantidad)
+    })),
+    cliente: {
+      tipoIdent: String(state.checkout.client.tipoIdent || "").trim() || null,
+      identificacion: String(state.checkout.client.identificacion || "").trim() || null,
+      indicativo: String(state.checkout.client.indicativo || "").trim() || null,
+      nombreCompleto: String(state.checkout.client.nombreCompleto || "").trim(),
+      telefono: String(state.checkout.client.telefono || "").trim(),
+      email: String(state.checkout.client.email || "").trim() || null
+    },
+    entrega: {
+      tipoEntrega: String(state.checkout.delivery.tipoEntrega || "").trim() || null,
+      destinatario: String(state.checkout.delivery.destinatario || "").trim() || null,
+      telefonoDestino: String(state.checkout.delivery.telefonoDestino || "").trim() || null,
+      direccion: String(state.checkout.delivery.direccionCompleta || "").trim(),
+      barrioID: Number.isFinite(Number(state.checkout.delivery.barrioId)) ? Number(state.checkout.delivery.barrioId) : null,
+      barrioNombre: String(state.checkout.delivery.barrio || "").trim() || null,
+      fechaEntrega: composeFechaEntregaISO(state.checkout.delivery.fechaEntrega, state.checkout.delivery.rangoHora),
+      rangoHora: String(state.checkout.delivery.rangoHora || "").trim() || null,
+      mensaje: String(state.checkout.extras.mensaje || "").trim() || null,
+      firma: String(state.checkout.extras.firma || "").trim() || null,
+      observacionGeneral: String(state.checkout.extras.observacionGeneral || "").trim() || null
+    }
+  };
+}
+
+function composeFechaEntregaISO(fechaEntrega, rangoHora) {
+  const date = String(fechaEntrega || "").trim();
+  if (!date) return null;
+
+  let hour = "10:00:00";
+  const range = String(rangoHora || "").toLowerCase();
+  if (range.includes("tarde")) {
+    hour = "15:00:00";
+  }
+
+  return `${date}T${hour}`;
 }
 
 function extractCliente(data) {
@@ -104,14 +240,20 @@ function setBadgeCliente(text) {
 }
 
 function applyClientAutofillToDom(client) {
+  const tipoIdent = dom.getById("tipoIdent");
+  const indicativo = dom.getById("indicativo");
   const nombre = dom.getById("nombreCompletoVisible");
   const telefono = dom.getById("telefono");
   const email = dom.getById("email");
 
+  dom.setValue(tipoIdent, client.tipoIdent);
+  dom.setValue(indicativo, client.indicativo);
   dom.setValue(nombre, client.nombreCompleto);
   dom.setValue(telefono, client.telefono);
   dom.setValue(email, client.email);
 
+  dom.setDatasetFlag(tipoIdent, "autoFilled", "true");
+  dom.setDatasetFlag(indicativo, "autoFilled", "true");
   dom.setDatasetFlag(nombre, "autoFilled", "true");
   dom.setDatasetFlag(telefono, "autoFilled", "true");
   dom.setDatasetFlag(email, "autoFilled", "true");
@@ -128,7 +270,9 @@ function registerCheckoutInputBindings({ store, bus }) {
   };
 
   const mapping = [
+    ["tipoIdent", ["client", "tipoIdent"]],
     ["identificacion", ["client", "identificacion"]],
+    ["indicativo", ["client", "indicativo"]],
     ["nombreCompletoVisible", ["client", "nombreCompleto"]],
     ["telefono", ["client", "telefono"]],
     ["email", ["client", "email"]],

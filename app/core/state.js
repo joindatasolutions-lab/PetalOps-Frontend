@@ -22,7 +22,9 @@ export const initialState = {
   },
   checkout: {
     client: {
+      tipoIdent: "CEDULA",
       identificacion: "",
+      indicativo: "+57",
       nombreCompleto: "",
       telefono: "",
       email: ""
