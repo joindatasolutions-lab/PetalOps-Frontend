@@ -38,6 +38,49 @@ export function createApiClient(config) {
       }
 
       return response.json();
+    },
+
+    async iniciarPagoPedido(pedidoId, payload) {
+      const response = await fetch(`${baseUrl}/pedido/${pedidoId}/pago/iniciar`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload || {})
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `HTTP ${response.status}`);
+      }
+
+      return response.json();
+    },
+
+    async simularPagoPedido(pedidoId, payload) {
+      const response = await fetch(`${baseUrl}/pedido/${pedidoId}/pago/simular`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload || { aprobar: true, estadoPago: "APPROVED", moneda: "COP" })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `HTTP ${response.status}`);
+      }
+
+      return response.json();
+    },
+
+    async getPagosPedido(pedidoId) {
+      const response = await fetch(`${baseUrl}/pedido/${pedidoId}/pagos`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `HTTP ${response.status}`);
+      }
+      return response.json();
     }
   };
 }

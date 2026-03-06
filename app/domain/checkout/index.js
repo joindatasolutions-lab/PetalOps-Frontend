@@ -1,7 +1,16 @@
 import * as dom from "../../shared/dom.js";
 import { formatearCOP, escaparHtml } from "../../shared/utils.js";
+import { isFeatureEnabled } from "../../core/config.js";
+
+const paymentTrackerState = {
+  pedidoId: null,
+  checkoutUrl: "",
+  status: "PENDIENTE"
+};
 
 export function initCheckoutModule({ store, bus, api, config }) {
+  registerPaymentTrackerBindings(api);
+  renderPaymentTracker();
   registerCheckoutInputBindings({ store, bus });
   registerWizardBindings({ store, bus });
   registerCheckoutSubmit({ store, bus, api, config });
@@ -112,7 +121,39 @@ function registerCheckoutSubmit({ store, bus, api, config }) {
 
     try {
       const result = await api.crearPedidoCheckout(payload);
-      alert(`Pedido registrado correctamente. Nro pedido: ${result.pedidoID}`);
+      const pedidoId = Number(result.pedidoID);
+      alert(`Pedido registrado correctamente. Nro pedido: ${pedidoId}`);
+
+      if (isFeatureEnabled("onlinePayment") && Number.isFinite(pedidoId)) {
+        try {
+          const pago = await api.iniciarPagoPedido(pedidoId, {
+            emailPagador: payload.cliente?.email || null,
+            moneda: config.payments?.moneda || "COP"
+          });
+
+          paymentTrackerState.pedidoId = pedidoId;
+          paymentTrackerState.checkoutUrl = String(pago.checkoutUrl || "");
+          paymentTrackerState.status = String(pago.estado || "PENDIENTE").toUpperCase();
+          renderPaymentTracker();
+
+          if (pago.checkoutUrl) {
+            // Redirige al checkout real de la pasarela (Wompi/MercadoPago/mock).
+            window.open(pago.checkoutUrl, "_blank", "noopener,noreferrer");
+          } else {
+            alert("Pedido creado, pero la pasarela no devolvió checkoutUrl.");
+          }
+        } catch (paymentError) {
+          console.error("Error iniciando pago online:", paymentError);
+          alert("Pedido creado, pero falló el inicio del pago online.");
+        }
+      }
+
+      if (!isFeatureEnabled("onlinePayment") && Number.isFinite(pedidoId)) {
+        paymentTrackerState.pedidoId = pedidoId;
+        paymentTrackerState.checkoutUrl = "";
+        paymentTrackerState.status = "CREADO";
+        renderPaymentTracker();
+      }
 
       bus.emit("cart:clear");
 
@@ -164,6 +205,93 @@ function registerCheckoutSubmit({ store, bus, api, config }) {
       dom.setDisabled(submit, summary.missing.length > 0);
     }
   }, "boundPedidoFormSubmit");
+}
+
+function registerPaymentTrackerBindings(api) {
+  const btnOpen = dom.getById("btnPaymentOpenCheckout");
+  const btnRefresh = dom.getById("btnPaymentRefresh");
+
+  dom.on(btnOpen, "click", () => {
+    if (!paymentTrackerState.checkoutUrl) {
+      alert("Aún no hay checkoutUrl disponible para este pedido.");
+      return;
+    }
+
+    window.open(paymentTrackerState.checkoutUrl, "_blank", "noopener,noreferrer");
+  }, "boundPaymentOpenCheckout");
+
+  dom.on(btnRefresh, "click", async () => {
+    if (!Number.isFinite(Number(paymentTrackerState.pedidoId))) {
+      alert("Aún no existe un pedido para consultar pagos.");
+      return;
+    }
+
+    dom.setDisabled(btnRefresh, true);
+    try {
+      const result = await api.getPagosPedido(paymentTrackerState.pedidoId);
+      const items = Array.isArray(result.items) ? result.items : [];
+      const latest = items.length ? items[0] : null;
+
+      if (latest?.estadoPago) {
+        paymentTrackerState.status = String(latest.estadoPago).toUpperCase();
+      }
+
+      renderPaymentTracker(items);
+    } catch (error) {
+      console.error("Error consultando historial de pagos:", error);
+      alert("No fue posible actualizar el estado del pago.");
+    } finally {
+      dom.setDisabled(btnRefresh, false);
+    }
+  }, "boundPaymentRefresh");
+}
+
+function renderPaymentTracker(historyItems = null) {
+  const panel = dom.getById("paymentTrackerPanel");
+  const badge = dom.getById("paymentTrackerBadge");
+  const meta = dom.getById("paymentTrackerMeta");
+  const pre = dom.getById("paymentTrackerHistory");
+  const btnOpen = dom.getById("btnPaymentOpenCheckout");
+  const btnRefresh = dom.getById("btnPaymentRefresh");
+
+  if (!panel || !badge || !meta || !pre) return;
+
+  const hasPedido = Number.isFinite(Number(paymentTrackerState.pedidoId));
+  dom.toggleClass(panel, "hidden", !hasPedido);
+  dom.setDisabled(btnOpen, !paymentTrackerState.checkoutUrl);
+  dom.setDisabled(btnRefresh, !hasPedido);
+
+  if (!hasPedido) {
+    return;
+  }
+
+  const status = String(paymentTrackerState.status || "PENDIENTE").toUpperCase();
+  dom.setText(badge, status);
+  dom.toggleClass(badge, "ok", ["APPROVED", "PAGADO", "AUTHORIZED"].includes(status));
+  dom.toggleClass(badge, "warn", !["APPROVED", "PAGADO", "AUTHORIZED"].includes(status));
+
+  const metaText = `Pedido #${paymentTrackerState.pedidoId} · Estado: ${status}`;
+  dom.setText(meta, metaText);
+
+  if (Array.isArray(historyItems)) {
+    if (!historyItems.length) {
+      dom.setText(pre, "Sin historial de pagos registrado para este pedido.");
+      return;
+    }
+
+    const reduced = historyItems.map(item => ({
+      idPago: item.idPago,
+      proveedor: item.proveedor,
+      estadoPago: item.estadoPago,
+      tipoEvento: item.tipoEvento,
+      createdAt: item.createdAt
+    }));
+
+    dom.setText(pre, JSON.stringify(reduced, null, 2));
+    return;
+  }
+
+  dom.setText(pre, "Pulsa 'Actualizar estado' para cargar historial de pagos.");
 }
 
 function buildCheckoutPayload(state, config) {

@@ -9,10 +9,13 @@ export const appConfig = {
     cart: true,
     checkout: true,
     deliveryAutocomplete: true,
-    onlinePayment: false,
+    onlinePayment: true,
     adminDashboard: false,
     roleBasedAccess: false,
     multiSucursal: true
+  },
+  payments: {
+    moneda: "COP"
   },
   theme: {
     name: "default",

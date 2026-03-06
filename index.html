@@ -45,6 +45,18 @@
     <div style="text-align:center; margin-bottom:20px;">
       <button class="btn-primary" id="btnIrPersonalizado">🌸 Crear Arreglo Personalizado</button>
     </div>
+    <div id="paymentTrackerPanel" class="payment-tracker hidden" aria-live="polite">
+      <div class="payment-tracker-head">
+        <h3>Seguimiento de pago</h3>
+        <span id="paymentTrackerBadge" class="badge warn">Pendiente</span>
+      </div>
+      <p id="paymentTrackerMeta" class="payment-tracker-meta">Aún no hay pagos iniciados.</p>
+      <div class="payment-tracker-actions">
+        <button type="button" id="btnPaymentOpenCheckout" class="btn-outline">Abrir pasarela</button>
+        <button type="button" id="btnPaymentRefresh" class="btn-primary">Actualizar estado</button>
+      </div>
+      <pre id="paymentTrackerHistory" class="payment-tracker-history">Sin historial</pre>
+    </div>
     <div id="catalogo" class="catalogo" role="list"></div>
   </section>
 
