@@ -8,6 +8,15 @@ const paymentTrackerState = {
   status: "PENDIENTE"
 };
 
+function parsePedidoId(value) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function hasValidPedidoId(value) {
+  return parsePedidoId(value) !== null;
+}
+
 export function initCheckoutModule({ store, bus, api, config }) {
   registerPaymentTrackerBindings(api);
   renderPaymentTracker();
@@ -121,10 +130,15 @@ function registerCheckoutSubmit({ store, bus, api, config }) {
 
     try {
       const result = await api.crearPedidoCheckout(payload);
-      const pedidoId = Number(result.pedidoID);
+      const pedidoId = parsePedidoId(result?.pedidoID);
+
+      if (!pedidoId) {
+        throw new Error("El backend no devolvio un pedidoID valido.");
+      }
+
       alert(`Pedido registrado correctamente. Nro pedido: ${pedidoId}`);
 
-      if (isFeatureEnabled("onlinePayment") && Number.isFinite(pedidoId)) {
+      if (isFeatureEnabled("onlinePayment")) {
         try {
           const pago = await api.iniciarPagoPedido(pedidoId, {
             emailPagador: payload.cliente?.email || null,
@@ -148,7 +162,7 @@ function registerCheckoutSubmit({ store, bus, api, config }) {
         }
       }
 
-      if (!isFeatureEnabled("onlinePayment") && Number.isFinite(pedidoId)) {
+      if (!isFeatureEnabled("onlinePayment")) {
         paymentTrackerState.pedidoId = pedidoId;
         paymentTrackerState.checkoutUrl = "";
         paymentTrackerState.status = "CREADO";
@@ -221,14 +235,14 @@ function registerPaymentTrackerBindings(api) {
   }, "boundPaymentOpenCheckout");
 
   dom.on(btnRefresh, "click", async () => {
-    if (!Number.isFinite(Number(paymentTrackerState.pedidoId))) {
+    if (!hasValidPedidoId(paymentTrackerState.pedidoId)) {
       alert("Aún no existe un pedido para consultar pagos.");
       return;
     }
 
     dom.setDisabled(btnRefresh, true);
     try {
-      const result = await api.getPagosPedido(paymentTrackerState.pedidoId);
+      const result = await api.getPagosPedido(parsePedidoId(paymentTrackerState.pedidoId));
       const items = Array.isArray(result.items) ? result.items : [];
       const latest = items.length ? items[0] : null;
 
@@ -256,7 +270,8 @@ function renderPaymentTracker(historyItems = null) {
 
   if (!panel || !badge || !meta || !pre) return;
 
-  const hasPedido = Number.isFinite(Number(paymentTrackerState.pedidoId));
+  const pedidoId = parsePedidoId(paymentTrackerState.pedidoId);
+  const hasPedido = pedidoId !== null;
   dom.toggleClass(panel, "hidden", !hasPedido);
   dom.setDisabled(btnOpen, !paymentTrackerState.checkoutUrl);
   dom.setDisabled(btnRefresh, !hasPedido);
@@ -270,7 +285,7 @@ function renderPaymentTracker(historyItems = null) {
   dom.toggleClass(badge, "ok", ["APPROVED", "PAGADO", "AUTHORIZED"].includes(status));
   dom.toggleClass(badge, "warn", !["APPROVED", "PAGADO", "AUTHORIZED"].includes(status));
 
-  const metaText = `Pedido #${paymentTrackerState.pedidoId} · Estado: ${status}`;
+  const metaText = `Pedido #${pedidoId} · Estado: ${status}`;
   dom.setText(meta, metaText);
 
   if (Array.isArray(historyItems)) {
