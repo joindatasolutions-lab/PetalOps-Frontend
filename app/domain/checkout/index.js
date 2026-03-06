@@ -17,6 +17,11 @@ function hasValidPedidoId(value) {
   return parsePedidoId(value) !== null;
 }
 
+function getReadableErrorMessage(error, fallbackMessage) {
+  const message = String(error?.message || "").trim();
+  return message || fallbackMessage;
+}
+
 export function initCheckoutModule({ store, bus, api, config }) {
   registerPaymentTrackerBindings(api);
   renderPaymentTracker();
@@ -146,7 +151,13 @@ function registerCheckoutSubmit({ store, bus, api, config }) {
           });
 
           paymentTrackerState.pedidoId = pedidoId;
-          paymentTrackerState.checkoutUrl = String(pago.checkoutUrl || "");
+          paymentTrackerState.pedidoId = pedidoId;
+          paymentTrackerState.checkoutUrl = "";
+          paymentTrackerState.status = "CREADO";
+          renderPaymentTracker();
+
+          const reason = getReadableErrorMessage(paymentError, "Error desconocido iniciando la pasarela.");
+          alert(`Pedido creado, pero fallo el inicio del pago online: ${reason}`);
           paymentTrackerState.status = String(pago.estado || "PENDIENTE").toUpperCase();
           renderPaymentTracker();
 
@@ -253,7 +264,8 @@ function registerPaymentTrackerBindings(api) {
       renderPaymentTracker(items);
     } catch (error) {
       console.error("Error consultando historial de pagos:", error);
-      alert("No fue posible actualizar el estado del pago.");
+      const reason = getReadableErrorMessage(error, "Error desconocido consultando pagos.");
+      alert(`No fue posible actualizar el estado del pago: ${reason}`);
     } finally {
       dom.setDisabled(btnRefresh, false);
     }
